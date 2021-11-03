@@ -72,7 +72,7 @@ public class yRequester
 	{
 
 		String mBody = null;
-		private String mRout;
+		private String mRout = "";
 		private String mMeth = "GET";
 		private List<String[]> mlsReqHeaders = new ArrayList<>();
 
@@ -94,10 +94,17 @@ public class yRequester
 		private boolean isOnlyCache;
 
 		private int mCacheMode;
+
+		private String mSingleUrl = "";
 		
 		public yRequest()
 		{
 			mCacheMode = CACHE_REGULAR;
+		}
+
+		public yRequest setUrl(String fUrl) {
+			mSingleUrl = fUrl;
+			return this;
 		}
 		
 		public yRequest setRout(String fRout)
@@ -145,12 +152,14 @@ public class yRequester
 		
 		public void run()
 		{
-			if(mUrl.isEmpty())
+			if(mSingleUrl.isEmpty())
+				mSingleUrl = mUrl;
+			if(mSingleUrl.isEmpty())
 			{
 				mMain.onError("Pls configure url");
 				return;
 			}
-			sendReq(mUrl,mMain,mRout,mCallback,mParam,mMeth,
+			sendReq(mSingleUrl,mMain,mRout,mCallback,mParam,mMeth,
 			mMain.getToken(),isOnlyCache);
 		}
 		
@@ -191,7 +200,7 @@ public class yRequester
 						HttpURLConnection urlConnection 
 							= (HttpURLConnection) url.openConnection();
 						Log.e(yHttpConst.TAG,"conn: "+ urlConnection.getURL());
-						if(!fToken.isEmpty())
+						if(fToken!=null&&!fToken.isEmpty())
 							urlConnection.setRequestProperty("X-API-Key",fToken);
 						for(String[] qHeader : mlsHeaders){
 							urlConnection.setRequestProperty(qHeader[0],qHeader[1]);
@@ -268,7 +277,8 @@ public class yRequester
 							String fHeaders = 
 								urlConnection.getHeaderFields().toString();
 							//Log.e(yHttpConst.TAG,"responce Head: \n"+fHeaders);
-							fOnEnd.run();
+							if(fOnEnd!=null)
+								fOnEnd.run();
 							if(fCode==200)
 							{
 								successResp(fCxt,urlConnection,fCallback);
@@ -321,7 +331,8 @@ public class yRequester
 									}
 									fCallback.error(e.toString());}});
 						e.printStackTrace();
-						fOnEnd.run();
+						if(fOnEnd!=null)
+							fOnEnd.run();
 					}
 				}}.start();
 		}
